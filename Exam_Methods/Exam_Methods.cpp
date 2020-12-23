@@ -82,6 +82,32 @@ double diff_z(double x, double y, double z) {
     return x-3*z-2*y;
 }
 
+//Função para otimização uni
+double f_uni(double x) {
+    return 4*pow(x,3)+2;
+}
+
+//Otimização multi
+double grad(double x, double y, char op) {
+    if (op == 'x'){
+        return 2*x+2;
+    }
+    else if (op == 'y') {
+        return 2*y-8;
+    }
+}
+double f_multi(double x, double y) {
+    return pow(x+1, 2) + pow(y-4, 2);
+}
+double Hessiana_inverted_times_grad(double x, double y, char op) {
+    if (op == 'x') {
+        return x+1;
+    }
+    else if (op == 'y') {
+        return y-4;
+    }
+}
+
 
 //---------------------------------------------------------------------------------------------------------------------------------------------
 //2- Zeros de uma função real
@@ -804,30 +830,174 @@ No caso de uma derivada de 2ª ordem: y''+ 3*y'+ 2*y= x
 
 //---------------------------------------------------------------------------------------------------------------------------------------------
 //6 Optimização
-//6.1 Introdução
-//6.2 Conceitos gerais
+
 //6.3 As técnicas concretas
+
 //6.3.1 Pesquisa unidimensional
+/*
+O mais elementar problema de optimização consiste na pesquisa do extremo de uma função de uma só
+variável. Os critérios analíticos são bem conhecidos, mas são numerosos os casos em que, por falta de
+uma definição analítica conveniente da função objectivo, ou de algum ou alguns dos seus componentes,
+há que recorrer a métodos numéricos.
+*/
+
 //6.3.2 Métodos Intervalares
+
+/*
+Regra Áurea
+O método da secção áurea utiliza esta condição. Com efeito, começando com o intervalo [x1, x2] em que
+se sabe estar o mínimo, escolhemos:
+1- x3 é tal que x3 - x1 = A*(x2-x1)
+2- x4 é tal que x4 - x1 = B*(x2-x1)
+3- Se for mínimo -> se f(x3) < f(x4) então o mínimo está entre [x1,x4]
+-> se f(x3) > f(x4) então o mínimo está entre [x3,x2]
+4- Se for máximo trocar os sinais de comparação das funções em x3 e x4
+*/
+double B = (sqrt(5) - 1) / 2; //Número de ouro
+double A = pow(B, 2);         //A=B^2
+double Aurea(double x1, double x2, char op) { //op == 'm'(mínimo), "M" (máximo)
+    double x3, x4;
+    while (abs(x1 - x2) > 0.000001) {
+        x3 = (x1 + A * (x2 - x1));
+        x4 = (x1 + B * (x2 - x1));
+        if (op == 'm') {
+            if (f_uni(x3) < f_uni(x4))
+            {
+                x1 = x1;
+                x2 = x4;
+            }
+            else
+            {
+                x1 = x3;
+                x2 = x2;
+            }
+        }
+        else if (op == 'M') {
+            if (f_uni(x3) >= f_uni(x4))
+            {
+                x1 = x1;
+                x2 = x4;
+            }
+            else
+            {
+                x1 = x3;
+                x2 = x2;
+            }
+        }
+    }
+    return x1;
+}
+
 //6.3.3 Pesquisa multidimensional
+
+/*
+Método do Gradiente
+Ao contrário dos métodos analíticos, que tentam ir directamente ao valor desejado, os métodos numéricos, iterativos, baseiam-se no princípio de dar sucessivos passos
+descendentes até encontrar o ponto mais baixo possível.
+
+1- xn+1 = xn - h*nabla, (h multiplicador decidido pelo operador e o nabla é o gradiente)
+2- Achar o gradiente
+3- Algoritmo:
+Começar com um h razoável (1 por exemplo)
+Se f(xn+1) < f(xn), aumentar o passo, h*2
+se não voltar atrás, h/2
+*/
+void Gradiente(double x, double y) {
+    double xn = x;
+    double yn = y;
+    double h = 1;
+    while (true) {
+        xn = x - h * grad(x, y, 'x');
+        yn = y - h * grad(x, y, 'y');
+        if (abs(xn - x) <= 0.01 || abs(yn - y) <= 0.01)
+        {
+            break;
+        }
+        if (f_multi(xn, yn) < f_multi(x, y))
+        {
+            h = h * 2;
+            x = xn;
+            y = yn;
+        }
+        else {
+            h = h / 2;
+        }
+    };
+    cout << "x: " << xn << "\ny: " << yn << endl;
+}
+
 //6.3.4 Método da quádrica
+/*
+Não usa h diretamente
+1- Achar o gradiente
+2- Achar a inversa da hessiana
+3- xn+1 = xn - H^-1*nabla (H é a hessiana de f(x,y) e nabla o gradiente) (H=[d^2f/d^2x, ...])
+4- Usar o maxima: hessian(f(x,y),[x,y]) obtemos a hessiana
+5- invert(%).matrix(grad(x,y))
+6- ratsimp(%) e obtemos então, H^-1*nabla
+7- Algoritmo: Caso a função cresça (f(xn,yn) > f(x,y)) alterar o ponto inicial
+*/
+void Quadrica(double x, double y) {
+    double xn=x;
+    double yn=y;
+    do {
+        x = xn;
+        y = yn;
+        xn = x - Hessiana_inverted_times_grad(x, y, 'x');
+        yn = y - Hessiana_inverted_times_grad(x, y, 'y');
+        //Parte possivelmente desnecesária
+        if (abs(xn - x) <= pow(10, -4) && abs(yn - y) <= pow(10, -4))
+        {
+            break;
+        }
+        if (f_multi(xn, yn) - f_multi(x, y) > 0)
+        {
+            cout << "Error!!" << endl;
+            break;
+        }
+    } while (abs(xn - x) > pow(10, -4) || abs(yn - y) > pow(10, -4));
+
+    cout << "x: " << xn << "\ny: " << yn << endl;
+}
+
 //6.3.5 Método de Levenberg - Marquardt
-//6.3.6 O problema das constrições
-//6.4 Programação não - convexa
-//6.5 Preparação da optimização
-//6.6 Análise do problema da Optimização
-//6.7 Ajustamento
-//6.7.1 A construção de uma função objectivo
-//6.7.2 O caso dos parâmetros lineares
-//6.7.3 O caso dos parâmetros não - lineares
+/*
+Método que não volta atrás ao contrário do gradiente
+A ideia notável que ocorreu separadamente a Kenneth Levenberg e a Donald Marquardt foi a de combinar
+os dois métodos anteriores no mesmo passo, fazendo:
+h = hquad(H^-1*nabla) +λ.nabla
+1- Começar com λ grande e ir diminuindo de forma a obter um resultado
+2- xn+1= xn - hLM
+3- Passos da quadrica
+4- Se a função decrescer diminuir o lambda, lambda/2
+else aumentar lambda, lambda*2
+*/
+void Levenberg_Marquardt(double x, double y, double lambda) {
+    double xn = x;
+    double yn = y;
+    do {
+        x = xn;
+        y = yn;
+        double hLM = Hessiana_inverted_times_grad(xn, yn, 'x') + lambda * grad(xn, yn, 'x');
+        xn = x - hLM;
+        hLM = Hessiana_inverted_times_grad(xn, yn, 'y') + lambda * grad(xn, yn, 'y');
+        yn = y - hLM;
+        if (f_multi(xn, yn) - f_multi(x, y) < 0)
+        {
+            lambda /= 2;
+        }
+        else
+        {
+            lambda *= 2;
+        }
+    } while (abs(xn - x) > pow(10, -4) || abs(yn - y) > pow(10, -4));
+
+    cout << "x: " << xn << "\ny: " << yn << endl;
+}
 
 
 int main()
 {
     //GaussJacobi(0, 0, 0);
-    //GaussSeidel(0, 0, 0);
-    //Trapezios(, 0, 2);
-    //Simpson(4, M_PI / 2, M_PI);
-    //cout << Euler(0,0,1.4,0.1);
-    Euler(0, 0, 0, 0.5, 0.025,'y');
+    Levenberg_Marquardt(1, 1,0.25);
 }
