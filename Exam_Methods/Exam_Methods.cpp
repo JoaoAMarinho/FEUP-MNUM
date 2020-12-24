@@ -515,14 +515,20 @@ Se n dividir em quadrados da forma 2^n, fazer a soma das diversas malhas.
 double Trapezios(double x0, double x1, double y0, double y1, double nx, double ny) {
     double sum_v = 0;
     double sum_pontos_i = 0;
+    //Versão 1
     vector<pair<double, double>> vertices = { make_pair(x0,y0),make_pair(x0,y1), make_pair(x1,y0), make_pair(x1,y1) };
-    vector<pair<double, double>> pontos_int = { make_pair(x0,y1 / 2),make_pair(x1 / 2,y0), make_pair(x1 / 2,y1), make_pair(x1,y1 / 2) };
-    pair<double, double> central = make_pair(x1 / 2, y1 / 2);
+    vector<pair<double, double>> pontos_int = { make_pair(x0,(y0 + y1) / 2),make_pair((x0 + x1) / 2,y0), make_pair((x0 + x1) / 2,y1), make_pair(x1,(y0 + y1) / 2) };
+    pair<double, double> central = make_pair((x0 + x1) / 2, (y0 + y1) / 2);
     for (int i = 0; i < vertices.size(); i++)
     {
         sum_v += func(vertices[i].first, vertices[i].second);
         sum_pontos_i += func(pontos_int[i].first, pontos_int[i].second);
     }
+    //Versão 2
+    /*
+    sum_v=func(x0,y0)+func(x0,y1)+func(x1,y0)+func(x1,y1);
+    sum_pontos_i=func(x0,(y0+y1)/2)+func((x0+x1)/ 2,y0)+func((x0+x1)/ 2,y1)+func(x1,(y0+y1)/ 2);
+    */
     double sum_central = func(central.first, central.second);
     double hx = (x1 - x0) / nx;
     double hy = (y1 - y0) / ny;
@@ -538,14 +544,20 @@ Se n dividir em quadrados da forma 2^n, fazer a soma das diversas malhas.
 double Simpson(double x0, double x1, double y0, double y1, double nx, double ny) {
     double sum_v = 0;
     double sum_pontos_i = 0;
+    //Versão 1
     vector<pair<double, double>> vertices = { make_pair(x0,y0),make_pair(x0,y1), make_pair(x1,y0), make_pair(x1,y1) };
-    vector<pair<double, double>> pontos_int = { make_pair(x0,y1 / 2),make_pair(x1 / 2,y0), make_pair(x1 / 2,y1), make_pair(x1,y1 / 2) };
-    pair<double, double> central = make_pair(x1 / 2, y1 / 2);
+    vector<pair<double, double>> pontos_int = { make_pair(x0,(y0+y1) / 2),make_pair( (x0+x1)/ 2,y0), make_pair( (x0+x1)/ 2,y1), make_pair(x1,(y0+y1)/ 2) };
+    pair<double, double> central = make_pair( (x0+x1) / 2, (y0+y1) / 2);
     for (int i = 0; i < vertices.size(); i++)
     {
         sum_v += func(vertices[i].first, vertices[i].second);
         sum_pontos_i += func(pontos_int[i].first, pontos_int[i].second);
     }
+    //Versão 2
+    /*
+    sum_v=func(x0,y0)+func(x0,y1)+func(x1,y0)+func(x1,y1);
+    sum_pontos_i=func(x0,(y0+y1)/2)+func((x0+x1)/ 2,y0)+func((x0+x1)/ 2,y1)+func(x1,(y0+y1)/ 2);
+    */
     double sum_central = func(central.first, central.second);
     double hx = (x1 - x0) / nx;
     double hy = (y1 - y0) / ny;
@@ -998,6 +1010,5 @@ void Levenberg_Marquardt(double x, double y, double lambda) {
 
 int main()
 {
-    //GaussJacobi(0, 0, 0);
-    Levenberg_Marquardt(1, 1,0.25);
+    cout << "Hope you enjoy!" << endl;
 }
